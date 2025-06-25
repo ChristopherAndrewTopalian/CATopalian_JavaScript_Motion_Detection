@@ -1,0 +1,333 @@
+<!-- Dedicated to God the Father -->
+<!-- All Rights Reserved Christopher Andrew Topalian Copyright 2000-2025 -->
+<!-- https://github.com/ChristopherTopalian -->
+<!-- https://github.com/ChristopherAndrewTopalian -->
+<!-- CATopalian_JavaScript_Motion_Detection.html -->
+
+<html>
+<head>
+<title> CATopalian JavaScript Motion Detection </title>
+
+<style>
+
+body
+{
+    background-color: rgb(30, 30, 30);
+    font-family: Arial, sans-serif;
+    text-align: center;
+    color: rgb(255, 255, 255);
+}
+
+video
+{
+    width: 100%;
+    max-width: 450px;
+    border: 2px solid rgb(30, 30, 30);
+}
+
+/* slider */
+input[type=range]
+{
+    background-color: rgb(0, 0, 0);
+    font-size: 20px;
+    color: rgb(255, 255, 255);
+}
+
+/* number input */
+input[type=number]
+{
+    background-color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+</style>
+
+<script>
+
+// worldVariables.js
+
+// worldwide threshold variable for motion sensitivity
+let currentThreshold = 9.0;
+
+//----//
+
+// shortcuts.js
+
+// shortcut to get an element by ID
+function ge(whichId)
+{
+    let result = document.getElementById(whichId);
+    return result;
+}
+
+// shortcut to create an element
+function ce(whichType)
+{
+    let result = document.createElement(whichType);
+    return result;
+}
+
+// shortcut to append an element to the body
+function ba(whichElement)
+{
+    let result = document.body.append(whichElement);
+    return result;
+}
+
+// shortcut for console logging
+function cl(whichMessage)
+{
+    let result = console.log(whichMessage);
+    return result;
+}
+
+//----//
+
+// makeTitleOfApp.js
+
+function makeTitleOfApp()
+{
+    let theTitle = ce('a');
+    theTitle.id = 'theTitle';
+    theTitle.href = 'https://github.com/ChristopherAndrewTopalian/CATopalian_JavaScript_Motion_Detection';
+    theTitle.target = '_blank';
+    theTitle.textContent = 'CATopalian JavaScript Motion Detection';
+    theTitle.style.position = 'absolute';
+    theTitle.style.right = 0 + 'px';
+    theTitle.style.top = -5 + 'px';
+    theTitle.style.width = 100 + 'px';
+    theTitle.style.margin = 10 + 'px';
+    theTitle.style.fontFamily = 'Arial';
+    theTitle.style.fontSize = '15px';
+    theTitle.style.fontWeight = 'bold';
+    theTitle.style.textAlign = 'right';
+    theTitle.style.lineHeight = 15 + 'px';
+    theTitle.style.textDecoration = 'none';
+    theTitle.style.color = 'rgb(100, 100, 100)';
+    theTitle.style.textShadow = '1px 1px rgb(0, 0, 0)';
+    ba(theTitle);
+}
+
+// builds the interface
+function makeInterface()
+{
+    // create video element
+    let video = ce('video');
+    video.id = 'video';
+    video.autoplay = true;
+    ba(video);
+
+    //-//
+
+    let controlsContainer = ce('div');
+    controlsContainer.style.border = 'solid 1px rgb(255, 255, 255)';
+    controlsContainer.style.display = 'flex';
+    controlsContainer.style.flexDirection = 'column';
+    controlsContainer.style.width = 150 + 'px';
+    controlsContainer.style.position = 'absolute';
+    controlsContainer.style.left = 0 + 'px';
+    controlsContainer.style.top = 0 + 'px';
+    ba(controlsContainer);
+
+    //-//
+
+    // create label for threshold control
+    let label = ce('label');
+    label.textContent = 'Motion Sensitivity Threshold';
+    label.style.marginTop = '4px';
+    controlsContainer.append(label);
+
+    //-//
+
+    // create range slider input
+    let thresholdSlider = ce('input');
+    thresholdSlider.type = 'range';
+    thresholdSlider.min = 1;
+    thresholdSlider.max = 45;
+    thresholdSlider.step = 0.1;
+    thresholdSlider.value = currentThreshold;
+    thresholdSlider.id = 'thresholdSlider';
+    // keep slider and number input in sync
+    thresholdSlider.oninput = function()
+    {
+        ge('thresholdNumber').value = thresholdSlider.value;
+
+        currentThreshold = parseFloat(thresholdSlider.value);
+    };
+    controlsContainer.append(thresholdSlider);
+
+    //-//
+
+    // create number input
+    let thresholdInput = ce('input');
+    thresholdInput.type = 'number';
+    thresholdInput.min = 1;
+    thresholdInput.max = 45;
+    thresholdInput.step = 0.1;
+    thresholdInput.value = currentThreshold;
+    thresholdInput.id = 'thresholdNumber';
+    // sync number input back to slider
+    thresholdInput.oninput = function()
+    {
+        ge('thresholdSlider').value = thresholdInput.value;
+
+        currentThreshold = parseFloat(thresholdInput.value);
+    };
+    controlsContainer.append(thresholdInput);
+
+    //-//
+
+    // create motion status div
+    let motionStatus = ce('div');
+    motionStatus.id = 'motionStatus';
+    motionStatus.textContent = 'Motion status: Waiting...';
+    motionStatus.style.position = 'absolute';
+    motionStatus.style.left = 0 + 'px';
+    motionStatus.style.bottom = 20 + 'px';
+    motionStatus.style.fontSize = '20px';
+    motionStatus.style.margin = 5 + 'px';
+    motionStatus.style.width = '100px';
+    motionStatus.style.border = 'solid 1px rgb(255, 255, 255)';
+    ba(motionStatus);
+}
+
+//----//
+
+// starts the camera stream and listens for video playback
+function startCamera()
+{
+    let video = ge('video');
+
+    let motionStatus = ge('motionStatus');
+
+    let isMotionDetected = false;
+
+    // request webcam access
+    navigator.mediaDevices.getUserMedia(
+    {
+        video: true
+    })
+    .then(function(stream)
+    {
+        // assign stream to video element
+        video.srcObject = stream;
+    })
+    .catch(function(error)
+    {
+        console.error('Error accessing the webcam:', error);
+    });
+
+    // when the video starts playing
+    video.addEventListener('play', function()
+    {
+        // create canvas for frame analysis
+        let canvas = ce('canvas');
+
+        let context = canvas.getContext('2d');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // repeated motion check loop
+        function checkMotion()
+        {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            let imageData1 = context.getImageData(0, 0, canvas.width, canvas.height);
+
+            setTimeout(function()
+            {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                let imageData2 = context.getImageData(0, 0, canvas.width, canvas.height);
+
+                let motionDetected = isMotion(imageData1, imageData2);
+
+                if (motionDetected)
+                {
+                    isMotionDetected = true;
+
+                    // motion detected
+                    motionStatus.textContent = 'MOTION';
+
+                    motionStatus.style.color = 'aqua';
+
+                    motionStatus.style.border = 'dashed aqua';
+                }
+                else
+                {
+                    isMotionDetected = false;
+
+                    // motion not detected
+                    motionStatus.textContent = 'MOTION';
+
+                    motionStatus.style.color = 'white';
+
+                    motionStatus.style.border = 'solid rgb(30, 30, 30)';
+                }
+
+                imageData1 = imageData2;
+
+                // repeat
+                requestAnimationFrame(checkMotion);
+            // 5 fps
+            }, 200);
+        }
+
+        // start loop
+        checkMotion();
+    });
+}
+
+// compares two frames of image data to detect motion
+function isMotion(imageData1, imageData2)
+{
+    let threshold = currentThreshold;
+
+    let data1 = new Uint8Array(imageData1.data.buffer);
+
+    let data2 = new Uint8Array(imageData2.data.buffer);
+
+    let totalDiff = 0;
+
+    // loop through every pixel
+    for (let i = 0; i < data1.length; i += 4)
+    {
+        // calculate absolute color difference
+        let diff = Math.abs(data1[i] - data2[i]) +
+        Math.abs(data1[i + 1] - data2[i + 1]) + 
+        Math.abs(data1[i + 2] - data2[i + 2]);
+
+        totalDiff += diff;
+    }
+
+    // average difference across all pixels
+    let avgDiff = totalDiff / (data1.length / 4);
+
+    // if difference exceeds threshold, motion is detected
+    return avgDiff > threshold;
+}
+
+function whenLoaded()
+{
+    // create the visual interface
+    makeInterface();
+
+    // start the video stream and motion detection
+    startCamera();
+
+    makeTitleOfApp();
+}
+
+</script>
+
+</head>
+
+<body onload = 'whenLoaded()'>
+
+</body>
+
+</html>
+

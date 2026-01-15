@@ -4,7 +4,8 @@
 <!-- https://github.com/ChristopherAndrewTopalian -->
 <!-- CATopalian_JavaScript_Motion_Detection.html -->
 
-<html>
+<!DOCTYPE html>
+<html lang = 'en'>
 <head>
 <title> CATopalian JavaScript Motion Detection </title>
 
@@ -12,10 +13,13 @@
 
 <meta name = 'viewport' content = 'width = device-width, initial-scale = 1.0'>
 
+<link rel = "icon" href = "src/media/textures/icons/CATopalian_True_AI_Centered.png" type = "image/png">
+
 <style>
 
 body
 {
+    margin: 2px 8px;
     background-color: rgb(30, 30, 30);
     font-family: Arial, sans-serif;
     text-align: center;
@@ -98,9 +102,6 @@ function makeTitleOfApp()
     theTitle.href = 'https://github.com/ChristopherAndrewTopalian/CATopalian_JavaScript_Motion_Detection';
     theTitle.target = '_blank';
     theTitle.textContent = 'CATopalian JavaScript Motion Detection';
-    theTitle.style.position = 'absolute';
-    theTitle.style.right = 0 + 'px';
-    theTitle.style.top = -5 + 'px';
     theTitle.style.width = 100 + 'px';
     theTitle.style.margin = 10 + 'px';
     theTitle.style.fontFamily = 'Arial';
@@ -111,12 +112,16 @@ function makeTitleOfApp()
     theTitle.style.textDecoration = 'none';
     theTitle.style.color = 'rgb(100, 100, 100)';
     theTitle.style.textShadow = '1px 1px rgb(0, 0, 0)';
-    ba(theTitle);
+    return theTitle;
 }
 
 // builds the interface
 function makeInterface()
 {
+    ba(makeTitleOfApp());
+
+    //-//
+
     // create video element
     let video = ce('video');
     video.id = 'video';
@@ -321,8 +326,6 @@ function whenLoaded()
 
     // start the video stream and motion detection
     startCamera();
-
-    makeTitleOfApp();
 }
 
 </script>
